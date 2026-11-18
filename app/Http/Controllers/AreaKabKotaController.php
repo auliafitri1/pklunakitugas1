@@ -33,7 +33,7 @@ class AreaKabKotaController extends Controller
             return $query->where('IdPropinsi', 'like', '%' . $keyword . '%');
         });
 
-        $data = $data->orderBy($sort, $order)->paginate(11);
+        $data = $data->orderBy($sort, $order)->paginate(8);
         
         return view('kabkota.index', compact('data', 'sort', 'order'));
 
@@ -100,5 +100,41 @@ class AreaKabKotaController extends Controller
         $kabkota->delete();
 
         return redirect('/kabkota')->with('success', 'Data propinsi berhasil dihapus!');
+    }
+
+     public function loadMore(Request $request)
+    {
+         $sort = $request->input('sort', 'IdKabkota');
+        //default: IdPropinsi
+
+        $order = $request->input('order', 'asc');
+        //default: ascending
+
+        $page  = $request->input('page', 2);
+
+        $data = AreaKabKota::query();
+
+        $data->when(request('id_kabkota'),
+        function($query, $keyword) {
+            return $query->where('IdKabKota', 'like', '%' . $keyword . '%');
+        });
+
+        $data->when(request('kabupatenkota'),
+        function($query, $keyword) {
+            return $query->where('KabupatenKota', 'like', '%' . $keyword . '%');
+        });
+
+        $data->when(request('id_propinsi'),
+        function($query, $keyword) {
+            return $query->where('IdPropinsi', 'like', '%' . $keyword . '%');
+        });
+
+        $data = $data->orderBy($sort, $order)->paginate(8, ['*'], 'page', $page);
+        
+        return response()->json([
+        'data'     => $data->items(),
+        'hasMore'  => $data->hasMorePages(),
+        'nextPage' => $data->currentPage() + 1,
+    ]);
     }
 }
